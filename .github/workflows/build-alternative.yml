@@ -1,0 +1,38 @@
+name: Build AutoCAD Add-in (Alternative)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Using windows-2019 which has Visual Studio 2019 pre-installed
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup MSBuild - on windows-2019 this will find VS 2019
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    # Restore NuGet packages if needed
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v1
+      
+    - name: Restore NuGet packages
+      run: nuget restore AreaDivider/AreaDivider.csproj -PackagesDirectory packages
+
+    # Build the project
+    - name: Build Solution
+      run: msbuild AreaDivider/AreaDivider.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
+
+    # Upload the built DLL as artifact
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AreaDivider-Release
+        path: AreaDivider/bin/Release/AreaDivider.dll
