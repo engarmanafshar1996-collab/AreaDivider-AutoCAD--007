@@ -1,0 +1,38 @@
+name: Build AutoCAD Add-in
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup MSBuild without specifying version (recommended approach)
+    # This will automatically find the latest available MSBuild on the runner
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    # Restore NuGet packages if needed
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v1
+      
+    - name: Restore NuGet packages
+      run: nuget restore AreaDivider/AreaDivider.csproj -PackagesDirectory packages
+
+    # Build the project
+    - name: Build Solution
+      run: msbuild AreaDivider/AreaDivider.csproj /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
+
+    # Upload the built DLL as artifact
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AreaDivider-Release
+        path: AreaDivider/bin/Release/AreaDivider.dll
